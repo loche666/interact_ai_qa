@@ -1,0 +1,10 @@
+elasticsearch==7.13.4
+numpy
+sklearn
+psutil
+requests
+flask==1.1.2
+gunicorn
+pymysql
+python-logstash
+python-consul

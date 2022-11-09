@@ -1,0 +1,10 @@
+FROM python:3.7-slim
+ENV pip_source=https://mirrors.aliyun.com/pypi/simple/
+COPY requirements_data.txt requirements.txt
+RUN python -m pip install -i ${pip_source} --upgrade pip setuptools && pip install -i ${pip_source} -r requirements.txt && rm -rf ~/.cache
+
+COPY src/constants src/constants
+COPY ["src/common_utils/__init__.py", "src/common_utils/logstash_utils.py", "src/common_utils/common_utils.py", "src/common_utils/es_utils.py", "src/common_utils/"]
+COPY src/resource src/resource
+COPY src/data_preparation src/data_preparation
+CMD ["python", "src/data_preparation/construct_es_data.py"]

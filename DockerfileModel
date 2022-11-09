@@ -1,0 +1,57 @@
+FROM tensorflow/tensorflow:1.14.0-gpu-py3
+
+ENV pip_source=https://mirrors.aliyun.com/pypi/simple/
+RUN python -m pip install -i ${pip_source} --upgrade pip
+
+# 安装依赖包
+RUN python -m pip install -i ${pip_source} --upgrade pip && \
+    mkdir /packages && \
+    cd packages && \
+    curl -s -O ai-models-bucket.obs.cn-north-1.myhuaweicloud.com/dependencies/sentencepiece-0.1.96-cp36-cp36m-manylinux_2_17_x86_64.manylinux2014_x86_64.whl && \
+    pip install --timeout=1000 /packages/sentencepiece-0.1.96-cp36-cp36m-manylinux_2_17_x86_64.manylinux2014_x86_64.whl && \
+    curl -s -O ai-models-bucket.obs.cn-north-1.myhuaweicloud.com/dependencies/tokenizers-0.8.1rc2-cp36-cp36m-manylinux1_x86_64.whl && \
+    pip install --timeout=1000 /packages/tokenizers-0.8.1rc2-cp36-cp36m-manylinux1_x86_64.whl && \
+    curl -s -O ai-models-bucket.obs.cn-north-1.myhuaweicloud.com/dependencies/Pillow-8.3.1-cp36-cp36m-manylinux_2_5_x86_64.manylinux1_x86_64.whl && \
+    pip install --timeout=1000 /packages/Pillow-8.3.1-cp36-cp36m-manylinux_2_5_x86_64.manylinux1_x86_64.whl && \
+    curl -s -O ai-models-bucket.obs.cn-north-1.myhuaweicloud.com/dependencies/scipy-1.5.4-cp36-cp36m-manylinux1_x86_64.whl && \
+    pip install --timeout=1000 /packages/scipy-1.5.4-cp36-cp36m-manylinux1_x86_64.whl && \
+    curl -s -O ai-models-bucket.obs.cn-north-1.myhuaweicloud.com/dependencies/numpy-1.19.5-cp36-cp36m-manylinux1_x86_64.whl && \
+    pip install --timeout=1000 /packages/numpy-1.19.5-cp36-cp36m-manylinux1_x86_64.whl && \
+    curl -s -O ai-models-bucket.obs.cn-north-1.myhuaweicloud.com/dependencies/transformers-4.9.1-py3-none-any.whl && \
+    pip install --timeout=1000 /packages/transformers-4.9.1-py3-none-any.whl && \
+    curl -s -O ai-models-bucket.obs.cn-north-1.myhuaweicloud.com/dependencies/tqdm-4.62.0-py2.py3-none-any.whl && \
+    pip install --timeout=1000 /packages/tqdm-4.62.0-py2.py3-none-any.whl && \
+    curl -s -O ai-models-bucket.obs.cn-north-1.myhuaweicloud.com/dependencies/torch-1.9.0-cp36-cp36m-manylinux1_x86_64.whl && \
+    pip install --timeout=1000 /packages/torch-1.9.0-cp36-cp36m-manylinux1_x86_64.whl && \
+    curl -s -O ai-models-bucket.obs.cn-north-1.myhuaweicloud.com/dependencies/torchvision-0.10.0-cp36-cp36m-manylinux1_x86_64.whl && \
+    pip install --timeout=1000 /packages/torchvision-0.10.0-cp36-cp36m-manylinux1_x86_64.whl && \
+    curl -s -O ai-models-bucket.obs.cn-north-1.myhuaweicloud.com/dependencies/scikit_learn-0.24.2-cp36-cp36m-manylinux1_x86_64.whl && \
+    pip install --timeout=1000 /packages/scikit_learn-0.24.2-cp36-cp36m-manylinux1_x86_64.whl && \
+    curl -s -O ai-models-bucket.obs.cn-north-1.myhuaweicloud.com/dependencies/nltk-3.6.2-py3-none-any.whl && \
+    pip install --timeout=1000 /packages/nltk-3.6.2-py3-none-any.whl && \
+    curl -s -O ai-models-bucket.obs.cn-north-1.myhuaweicloud.com/dependencies/huggingface_hub-0.0.15-py3-none-any.whl && \
+    pip install --timeout=1000 /packages/huggingface_hub-0.0.15-py3-none-any.whl && \
+    curl -s -O ai-models-bucket.obs.cn-north-1.myhuaweicloud.com/dependencies/botocore-1.26.10-py3-none-any.whl && \
+    pip install --timeout=1000 /packages/botocore-1.26.10-py3-none-any.whl && \
+    curl -s -O ai-models-bucket.obs.cn-north-1.myhuaweicloud.com/dependencies/boto3-1.23.10-py3-none-any.whl && \
+    pip install --timeout=1000 /packages/boto3-1.23.10-py3-none-any.whl && \
+    pip install sentence-transformers==2.0.0 && \
+    pip install huggingface_hub==0.0.12 && \
+    pip install flask && \
+    pip install gunicorn && \
+    rm -rf /packages /root/.cache
+
+COPY app_model.py app.py
+COPY src/models/bert.py src/models/bert.py
+COPY src/common_utils src/common_utils
+COPY src/constants src/constants
+COPY src/resource src/resource
+
+COPY model/intelligent_interact_qa/business_type_model src/model_training/business_type_model
+COPY model/intelligent_interact_qa/pretrain_model src/model_training/pretrain_model
+COPY model/intelligent_interact_qa/question_similarity_model src/model_training/question_similarity_model
+
+ENV FLASK_APP app.py
+
+EXPOSE 8500
+CMD ["gunicorn", "--workers=1", "-b", ":8500", "--limit-request-line", "0", "--timeout", "9999999", "app:app"]

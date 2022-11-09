@@ -1,0 +1,15 @@
+FROM python:3.6-slim
+ENV pip_source=https://mirrors.aliyun.com/pypi/simple/
+COPY requirements_app.txt requirements.txt
+RUN python -m pip install -i ${pip_source} --upgrade pip setuptools && pip install -i ${pip_source} -r requirements.txt && rm -rf ~/.cache
+
+COPY src/constants src/constants
+COPY src/common_utils src/common_utils
+COPY src/resource src/resource
+COPY src/models src/models
+COPY app.py app.py
+
+ENV FLASK_APP app.py
+
+EXPOSE 8501
+CMD ["gunicorn", "--workers=1", "-b", ":8501", "--limit-request-line", "0", "--timeout", "9999999", "app:app"]

@@ -1,0 +1,6 @@
+elasticsearch==7.13.4
+numpy
+sklearn
+psutil
+requests
+python-logstash
